@@ -14,7 +14,14 @@ const errorHandler = require('./src/middleware/errorHandler');
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'https://restaurants-os3fs97xx-nsravan951-creates-projects.vercel.app',
+  ],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  credentials: true,
+}));
 app.use(express.json());
 app.use((req, res, next) => {
   if (process.env.NODE_ENV !== 'test') {
