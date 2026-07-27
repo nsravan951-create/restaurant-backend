@@ -205,6 +205,28 @@ router.get('/me', requireAuth(), asyncHandler(async (req, res) => {
   return res.json({ user: rows[0] });
 }));
 
+router.post('/verify-password', requireAuth(['owner', 'super_admin']), asyncHandler(async (req, res) => {
+  const { currentPassword, password } = req.body || {};
+  const verifyPassword = String(currentPassword || password || '').trim();
+
+  if (!verifyPassword || verifyPassword.length < 6) {
+    return res.status(400).json({ message: 'Password is required' });
+  }
+
+  const { rows } = await pool.query('SELECT id, password_hash FROM users WHERE id = $1 LIMIT 1', [req.user.userId]);
+
+  if (!rows.length) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  const ok = await bcrypt.compare(verifyPassword, rows[0].password_hash);
+  if (!ok) {
+    return res.status(400).json({ message: 'Current password is incorrect' });
+  }
+
+  return res.json({ message: 'Password verified', ok: true });
+}));
+
 router.post('/change-password', requireAuth(), asyncHandler(async (req, res) => {
   const data = passwordChangeSchema.parse(req.body);
 
